@@ -11,7 +11,7 @@ CXX=g++
 CXXFLAGS=-std=c++11 -Wall -g3 -c
 
 # object files
-OBJS = dictionary.o thread_manager.o
+OBJS = log.o cryptoexchange.o
 
 # Program name
 PROGRAM = cryptoexc
@@ -26,11 +26,11 @@ PROGRAM = cryptoexc
 $(PROGRAM) : $(OBJS)
 	$(CXX) -pthread -o $(PROGRAM) $^
 
-dictionary.o : dictionary.h dictionary.cpp
-	$(CXX) $(CXXFLAGS) dictionary.cpp
-	
-thread_manager.o : dictionary.o countprefix.h populatetree.h readprefix.h thread_manager.cpp
-	$(CXX) $(CXXFLAGS) thread_manager.cpp
+log.o : cryptoexchange.h log.h log.cpp 
+	$(CXX) $(CXXFLAGS) log.cpp 
+
+cryptoexchange.o : log.o cryptoexchange.h cryptoexchange.cpp
+	$(CXX) $(CXXFLAGS) cryptoexchange.cpp
 
 clean :
 	rm -f *.o *.exe $(PROGRAM)

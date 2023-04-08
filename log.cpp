@@ -136,7 +136,7 @@ void log_request_added(RequestType requestType,
  * 
  * Counts reflect numbers *after* the request has been removed
  */
-void log_request_removed(Consumers consumer, 
+void log_request_removed(ConsumerType consumer, 
                          RequestType requestType,
                          unsigned int consumed[],
                          unsigned int inRequestQueue[]) {
