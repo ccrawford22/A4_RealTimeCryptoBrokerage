@@ -22,6 +22,7 @@ int main(int argc, char **argv)
          << endl;
 
     // TODO: implement argument handling based on previous assignments
+    // set default values
     int r = 100;
     int x = 0;
     int y = 0;
