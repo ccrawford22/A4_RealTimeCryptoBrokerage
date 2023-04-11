@@ -83,8 +83,6 @@ int main(int argc, char **argv)
     cout << "Milliseconds for Bitcoin request production: " << b << endl;
     cout << "Milliseconds for Ethereum request production: " << e << endl;
 
-    return 0;
-
     // TODO: implement thread and other element creations here
 
     return 0;
