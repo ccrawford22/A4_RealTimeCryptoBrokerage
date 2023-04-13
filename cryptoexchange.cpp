@@ -11,16 +11,43 @@
 #include <fstream>
 #include <iostream>
 
+#include <queue>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h> //TODO: Do we need this?
+
 #include "cryptoexchange.h"
 
 using namespace std;
 
+// Note: use only sem_init, sem_wait, and sem_pos POSIX semaphores
+
+/* For implementing the critical region */
+sem_t mutexQueue;
+
+/* Items in buffer */
+sem_t unconsumed;
+
+/* Space in buffer */
+sem_t shared;
+
+// TODO: We need a semaphore for precedence constraint?
+/* number of trade requests for Bitcoin */
+/* Set initial value to max allowed for Bitcoin = 5 */
+sem_t numTradeRequestsOfBitcoin;
+
+/* Number of trade requests for Ethereum */
+/* Set initial value to max allowed for Ethereum = 16 */
+sem_t numTradeRequestsOfEthereum;
+
+/* Max capacity of queue */
+sem_t maxCapacity;
+
+/* Shared BufferADT buffer: queue, tree, etc */
+queue<int> buffer;
+
 int main(int argc, char **argv)
 {
-    cout << endl
-         << "Hello World!" << endl
-         << endl;
-
     // TODO: implement argument handling based on previous assignments
     // set default values
     int r = 100;
@@ -65,7 +92,7 @@ int main(int argc, char **argv)
             b = atoi(optarg);
             break;
         case 'e': /**
-                   * @brief case -eN Specifies the number of milliseconds required to
+                   * @brief case -e N Specifies the number of milliseconds required to
                    * produce and publish an Ethereum request.
                    */
             e = atoi(optarg);
@@ -84,6 +111,7 @@ int main(int argc, char **argv)
     cout << "Milliseconds for Ethereum request production: " << e << endl;
 
     // TODO: implement thread and other element creations here
+    // sem_init(&mutexQueue, 1, 1);
 
     return 0;
 }
