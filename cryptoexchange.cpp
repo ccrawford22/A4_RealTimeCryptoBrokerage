@@ -46,6 +46,10 @@ sem_t maxCapacity;
 /* Shared BufferADT buffer: queue, tree, etc */
 queue<int> buffer;
 
+// Declare necessary thread identifiers for producer and consumer threads
+pthread_t producerThread;
+pthread_t consumerThread;
+
 int main(int argc, char **argv)
 {
     // TODO: implement argument handling based on previous assignments
@@ -111,7 +115,31 @@ int main(int argc, char **argv)
     cout << "Milliseconds for Ethereum request production: " << e << endl;
 
     // TODO: implement thread and other element creations here
-    // sem_init(&mutexQueue, 1, 1);
+    // Initalize semaphore with a count of 1 (mutex)
+    // TODO: Should it be (&mutexQueue, 0, 1) the 0 signifying that it is shared between threads of the same process?
+    sem_init(&mutexQueue, 1, 1);
+
+    // Initialize semaphore with a count of 0 (no items in buffer)
+    sem_init(&unconsumed, 0, 0);
+
+    // Initialize semaphore with a count of 16 (max queue size)
+    sem_init(&shared, 0, 16);
+
+    // Initialize semaphore with a count of 5 (max allowed in queue)
+    sem_init(&numTradeRequestsOfBitcoin, 0, 5);
+
+    // Initialize semaphore with a count of 16 (max 16 if no Bitcoin requests)
+    sem_init(&numTradeRequestsOfEthereum, 0, 16);
+
+    // Initialize semaphore with a count of 1 (binary)
+    sem_init(&maxCapacity, 0, 1);
+
+    // TODO: Update pthread_create with proper arguments when available
+    //  Call pthread_create to create the producer thread
+    pthread_create(&producerThread, NULL, NULL, NULL);
+
+    // Call pthread_create to create the consumer thread
+    pthread_create(&consumerThread, NULL, NULL, NULL);
 
     return 0;
 }
