@@ -167,8 +167,18 @@ int main(int argc, char **argv)
     // Wait until enough requests have been produced
     for (int i = 0; i < r; i++)
     {
+        sem_wait(&(sharedData.requestsComplete));
+    }
+    // Kill producer threads
+    pthread_cancel(producerBitcoinThread);
+    pthread_cancel(producerEtheriumThread);
+
+    // Wait until all requests have been consumed from the buffer
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
         sem_wait(&(sharedData.availableslotsTotal));
     }
+
     // Kill consumer threads
     pthread_cancel(consumerXbchainThread);
     pthread_cancel(consumerYbchainThread);
