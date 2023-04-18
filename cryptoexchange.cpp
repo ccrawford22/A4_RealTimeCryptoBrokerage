@@ -1,3 +1,10 @@
+/**
+ * Cody Crawford
+ * RedId: 824167663
+ * CS 480 - 1001
+ * Assignment 4: Real Time Crypto Brokerage
+ */
+
 #define BADFLAG 1
 #define NORMALEXIT 0
 
@@ -11,48 +18,18 @@
 #include <fstream>
 #include <iostream>
 
-#include <queue>
-#include <pthread.h>
-#include <semaphore.h>
-#include <unistd.h> //TODO: Do we need this?
-
 #include "cryptoexchange.h"
+#include "shared.h"
+#include "producer.h"
+#include "consumer.h"
 
 using namespace std;
 
 // Note: use only sem_init, sem_wait, and sem_pos POSIX semaphores
 
-/* For implementing the critical region */
-sem_t mutexQueue;
-
-/* Items in buffer */
-sem_t unconsumed;
-
-/* Space in buffer */
-sem_t shared;
-
-// TODO: We need a semaphore for precedence constraint?
-/* number of trade requests for Bitcoin */
-/* Set initial value to max allowed for Bitcoin = 5 */
-sem_t numTradeRequestsOfBitcoin;
-
-/* Number of trade requests for Ethereum */
-/* Set initial value to max allowed for Ethereum = 16 */
-sem_t numTradeRequestsOfEthereum;
-
-/* Max capacity of queue */
-sem_t maxCapacity;
-
-/* Shared BufferADT buffer: queue, tree, etc */
-queue<int> buffer;
-
-// Declare necessary thread identifiers for producer and consumer threads
-pthread_t producerThread;
-pthread_t consumerThread;
-
 int main(int argc, char **argv)
 {
-    // TODO: implement argument handling based on previous assignments
+    // Argument handling
     // set default values
     int r = 100;
     int x = 0;
@@ -107,39 +84,103 @@ int main(int argc, char **argv)
         }
     }
 
-    // Print the values of the arguments
-    cout << "Total number of trade requests: " << r << endl;
-    cout << "Milliseconds for Blockchain X processing: " << x << endl;
-    cout << "Milliseconds for Blockchain Y processing: " << y << endl;
-    cout << "Milliseconds for Bitcoin request production: " << b << endl;
-    cout << "Milliseconds for Ethereum request production: " << e << endl;
+    // // Print the values of the arguments
+    // cout << "Total number of trade requests: " << r << endl;
+    // cout << "Milliseconds for Blockchain X processing: " << x << endl;
+    // cout << "Milliseconds for Blockchain Y processing: " << y << endl;
+    // cout << "Milliseconds for Bitcoin request production: " << b << endl;
+    // cout << "Milliseconds for Ethereum request production: " << e << endl;
 
-    // TODO: implement thread and other element creations here
-    // Initalize semaphore with a count of 1 (mutex)
-    // TODO: Should it be (&mutexQueue, 0, 1) the 0 signifying that it is shared between threads of the same process?
-    sem_init(&mutexQueue, 1, 1);
+    // DEFINE AND INITIALIZE SHARED DATA
+    SHARED_DATA sharedData;
 
-    // Initialize semaphore with a count of 0 (no items in buffer)
-    sem_init(&unconsumed, 0, 0);
+    // Initialize semaphores with default values
+    //  shared semaphore mutex = 1
+    sem_init(&(sharedData.mutexBuffer), 1, 1);
+    // shared semaphore unconsumed = 0
+    sem_init(&(sharedData.unconsumed), 1, 0);
+    // shared semaphore availableSlots = BufferSize
+    sem_init(&(sharedData.availableslotsBitcoin), 1, BITCOIN_MAX);
+    sem_init(&(sharedData.availableslotsTotal), 1, BUFFER_SIZE);
 
-    // Initialize semaphore with a count of 16 (max queue size)
-    sem_init(&shared, 0, 16);
+    sem_init(&(sharedData.requestsComplete), 1, 0);
 
-    // Initialize semaphore with a count of 5 (max allowed in queue)
-    sem_init(&numTradeRequestsOfBitcoin, 0, 5);
+    // Initialize other sharedData values
+    for (unsigned type = 0; type < RequestTypeN; type++)
+    {
+        sharedData.inRequestQueue[type] = 0;
+        sharedData.produced[type] = 0;
+        for (unsigned consumer = 0; consumer < ConsumerTypeN; consumer++)
+        {
+            sharedData.consumed[consumer][type] = 0;
+        }
+    }
 
-    // Initialize semaphore with a count of 16 (max 16 if no Bitcoin requests)
-    sem_init(&numTradeRequestsOfEthereum, 0, 16);
+    // THREAD DEFINITIONS AND HANDLING
+    // Producers
+    pthread_t producerBitcoinThread;  // Bitcoin
+    pthread_t producerEtheriumThread; // Ethereum
+    // Consumers
+    pthread_t consumerXbchainThread; // Blockchain X
+    pthread_t consumerYbchainThread; // Blockchain Y
 
-    // Initialize semaphore with a count of 1 (binary)
-    sem_init(&maxCapacity, 0, 1);
+    // Create producers and consumers
+    Producer pBitcoin = {Bitcoin, milliseconds(b), &sharedData};
+    Producer pEtherium = {Ethereum, milliseconds(e), &sharedData};
+    Consumer cBlockchainX = {BlockchainX, milliseconds(x), &sharedData};
+    Consumer cBlockchainY = {BlockchainY, milliseconds(y), &sharedData};
 
-    // TODO: Update pthread_create with proper arguments when available
-    //  Call pthread_create to create the producer thread
-    pthread_create(&producerThread, NULL, NULL, NULL);
+    // Start threads
+    if (pthread_create(&producerBitcoinThread, NULL,
+                       &produce, &pBitcoin))
+    {
+        // Error handling
+        cout << endl
+             << "Unable to create producerBitcoinThread." << endl;
+        exit(BADFLAG); // BADFLAG is an error # defined in a header
+    }
+    if (pthread_create(&producerEtheriumThread, NULL,
+                       &produce, &pEtherium))
+    {
+        // Error handling
+        cout << endl
+             << "Unable to create producerEtheriumThread." << endl;
+        exit(BADFLAG); // BADFLAG is an error # defined in a header
+    }
+    if (pthread_create(&consumerXbchainThread, NULL,
+                       &consume, &cBlockchainX))
+    {
+        // Error handling
+        cout << endl
+             << "Unable to create consumerXbchainThread." << endl;
+        exit(BADFLAG); // BADFLAG is an error # defined in a header
+    }
+    if (pthread_create(&consumerYbchainThread, NULL,
+                       &consume, &cBlockchainY))
+    {
+        // Error handling
+        cout << endl
+             << "Unable to create consumerYbchainThread." << endl;
+        exit(BADFLAG); // BADFLAG is an error # defined in a header
+    }
 
-    // Call pthread_create to create the consumer thread
-    pthread_create(&consumerThread, NULL, NULL, NULL);
+    // Wait until enough requests have been produced
+    for (int i = 0; i < r; i++)
+    {
+        sem_wait(&(sharedData.availableslotsTotal));
+    }
+    // Kill consumer threads
+    pthread_cancel(consumerXbchainThread);
+    pthread_cancel(consumerYbchainThread);
+
+    // Log entire production history
+    log_production_history(sharedData.produced, sharedData.consumed);
+
+    // Clean up semaphores
+    sem_destroy(&sharedData.mutexBuffer);
+    sem_destroy(&sharedData.unconsumed);
+    sem_destroy(&sharedData.availableslotsBitcoin);
+    sem_destroy(&sharedData.availableslotsTotal);
 
     return 0;
 }

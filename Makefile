@@ -11,7 +11,7 @@ CXX=g++
 CXXFLAGS=-std=c++11 -Wall -g3 -c
 
 # object files
-OBJS = cryptoexchange.o
+OBJS = log.o cryptoexchange.o
 
 # Program name
 PROGRAM = cryptoexc
@@ -29,13 +29,7 @@ $(PROGRAM) : $(OBJS)
 log.o : cryptoexchange.h log.h log.cpp 
 	$(CXX) $(CXXFLAGS) log.cpp 
 
-consumer.o : consumer.h consumer.cpp
-	$(CXX) $(CXXFLAGS) consumer.cpp 
-
-producer.o : producer.h producer.cpp 
-	$(CXX) $(CXXFLAGS) producer.cpp 
-
-cryptoexchange.o : log.o consumer.o producer.o cryptoexchange.h cryptoexchange.cpp
+cryptoexchange.o : log.o consumer.h producer.h shared.h cryptoexchange.h cryptoexchange.cpp
 	$(CXX) $(CXXFLAGS) cryptoexchange.cpp
 
 clean :
