@@ -135,7 +135,6 @@ void log_request_added(RequestType requestType,
 /**
  * @brief   Show that an item has been removed from the request queue
  *          and print the current status of the broker request queue.
-
  * @param consumers         Who removed and processed the request?
  * @param type              What kind of request was removed?  As each consumer consumes
  *                          one type of request, this is the same as the producer.
