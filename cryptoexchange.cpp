@@ -103,6 +103,7 @@ int main(int argc, char **argv)
     sem_init(&(sharedData.availableslotsBitcoin), 1, BITCOIN_MAX);
     sem_init(&(sharedData.availableslotsTotal), 1, BUFFER_SIZE);
 
+    sem_init(&(sharedData.requestStart), 1, 0);
     sem_init(&(sharedData.requestsComplete), 1, 0);
 
     // Initialize other sharedData values
@@ -164,6 +165,12 @@ int main(int argc, char **argv)
         exit(BADFLAG); // BADFLAG is an error # defined in a header
     }
 
+    // Push requests to be produced
+    for (int i = 0; i < r; i++)
+    {
+        sem_post(&(sharedData.requestStart));
+    }
+
     // Wait until enough requests have been produced
     for (int i = 0; i < r; i++)
     {
@@ -185,12 +192,6 @@ int main(int argc, char **argv)
 
     // Log entire production history
     log_production_history(sharedData.produced, sharedData.consumed);
-
-    // Clean up semaphores
-    sem_destroy(&sharedData.mutexBuffer);
-    sem_destroy(&sharedData.unconsumed);
-    sem_destroy(&sharedData.availableslotsBitcoin);
-    sem_destroy(&sharedData.availableslotsTotal);
 
     return 0;
 }

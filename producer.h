@@ -35,6 +35,10 @@ void *produce(void *v)
 
     while (true)
     {
+
+        // wait for available request start semaphore
+        sem_wait(&(p->sd->requestStart));
+
         // Producing an item
         sleep_for(p->ms);
         // make sure we have room
@@ -62,6 +66,7 @@ void *produce(void *v)
         // spin request complete semaphore
         sem_post(&(p->sd->requestsComplete));
     }
+    return 0;
 }
 
 #endif

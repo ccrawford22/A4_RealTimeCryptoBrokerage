@@ -36,6 +36,9 @@ typedef struct
     sem_t availableslotsBitcoin;
     sem_t availableslotsTotal;
 
+    // Production Starter
+    sem_t requestStart;
+
     /* Production ender */
     sem_t requestsComplete;
 
@@ -45,7 +48,7 @@ typedef struct
     /**
      * @brief Array of number of requests of each type that are
      * in the request queue and have not yet been consumed.
-     * (inRequestQueue[Bitcoin] and inRequestQueue[Etherium])
+     * (inRequestQueue[Bitcoin] and inRequestQueue[Ethereum])
      */
     unsigned int inRequestQueue[RequestTypeN];
 
